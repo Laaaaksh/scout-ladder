@@ -99,8 +99,14 @@ DIM, BOLD, CYAN, GREEN, YELLOW, RED, MAGENTA, RESET = (
 )
 
 
+def _to_plain(obj):
+    """json.dumps fallback. SDK responses are pydantic models, not dicts, so turn them into dicts."""
+    return obj.model_dump(mode="json") if hasattr(obj, "model_dump") else str(obj)
+
+
 def _short(value, limit=110) -> str:
-    text = value if isinstance(value, str) else json.dumps(value, ensure_ascii=False)
+    # default=_to_plain: printing any SDK object (errors, costs, tool inputs) must never crash a run
+    text = value if isinstance(value, str) else json.dumps(value, ensure_ascii=False, default=_to_plain)
     text = " ".join(text.split())
     return text if len(text) <= limit else text[: limit - 1] + "…"
 
@@ -234,8 +240,19 @@ def download_outputs(session_id: str) -> list[Path]:
     return saved
 
 
+def format_money(money) -> str:
+    """The API sends money as {"amount": "42", "currency": "USD"}: whole cents, as a string."""
+    cents = int(money.amount)
+    symbol = "$" if money.currency == "USD" else f"{money.currency} "
+    return f"{symbol}{cents // 100}.{cents % 100:02d}"
+
+
 def show_cost(session_id: str) -> None:
-    session = client.beta.sessions.retrieve(session_id)
-    cost = getattr(getattr(session, "usage", None), "list_cost", None)
-    if cost is not None:
-        print(f"{DIM}  Session cost so far (list price): {_short(cost)}{RESET}")
+    # Cosmetic, so it never gets to fail a run whose real work already finished.
+    try:
+        session = client.beta.sessions.retrieve(session_id)
+        cost = getattr(getattr(session, "usage", None), "list_cost", None)
+        if cost is not None:
+            print(f"{DIM}  Session cost (list price): {format_money(cost)}{RESET}")
+    except Exception as err:  # noqa: BLE001
+        print(f"{DIM}  (couldn't read the cost: {err.__class__.__name__}. See the Console link above.){RESET}")
