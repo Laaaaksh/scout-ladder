@@ -55,6 +55,14 @@ No uv? Install Python 3.10 or newer, run `pip install -r requirements.txt`, and 
 | 5 | `uv run step5_schedule.py` | Scheduled deployment | The scout runs daily at 8 AM IST in Anthropic's cloud, with no server of yours |
 | 6 | `uv run step6_stress_test.py "your idea"` | Multi-agent | A lead hands your idea to three specialists in parallel and writes a verdict |
 
+Check everything you built, any time, for free:
+
+```bash
+uv run status.py
+```
+
+The command shows your agents, sandbox, memory, the daily schedule with its next run, and your latest runs with their cost.
+
 Output files land in `outputs/<session-id>/`. Every run prints a Console link where you watch the full trace, tool calls, and cost.
 
 ## Where each feature lives in the code
