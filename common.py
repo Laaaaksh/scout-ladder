@@ -12,6 +12,15 @@ from pathlib import Path
 import anthropic
 from dotenv import load_dotenv
 
+# Windows: make the console safe before anything prints.
+# UTF-8 with "replace" so emoji and long dashes never crash a run (old Windows code pages can't encode them),
+# and os.system("") switches on colour codes in older Windows terminals so they don't print as [36m garbage.
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+if os.name == "nt":
+    os.system("")
+
 load_dotenv()
 
 client = anthropic.Anthropic()  # reads ANTHROPIC_API_KEY (or an `ant auth login` profile)
@@ -26,7 +35,7 @@ def _preflight() -> None:
     try:
         client.beta.environments.list(limit=1)
     except TypeError:  # the SDK found no credentials at all
-        sys.exit("No API key found. Copy .env.example to .env and paste your key from "
+        sys.exit("🔑 No API key found. Copy .env.example to .env and paste your key from "
                  "https://platform.claude.com/settings/keys (or run `ant auth login`).")
     except anthropic.AuthenticationError:
         sys.exit("Your API key was rejected. Check ANTHROPIC_API_KEY in .env (no quotes, no spaces).")
@@ -60,12 +69,12 @@ OUTPUT_DIR = Path(__file__).with_name("outputs")
 # re-running a rung (which you will do on stage) reuses them instead of piling up copies.
 
 def load_state() -> dict:
-    return json.loads(STATE_FILE.read_text()) if STATE_FILE.exists() else {}
+    return json.loads(STATE_FILE.read_text(encoding="utf-8")) if STATE_FILE.exists() else {}
 
 
 def save_state(**updates) -> None:
     state = load_state() | updates
-    STATE_FILE.write_text(json.dumps(state, indent=2))
+    STATE_FILE.write_text(json.dumps(state, indent=2), encoding="utf-8")
 
 
 def ensure_environment() -> str:

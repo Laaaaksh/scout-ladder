@@ -1,0 +1,49 @@
+# Workshop attendees bring Windows and Mac laptops. This proves the repo installs and starts
+# on both, without an API key: no key -> a friendly message, never a crash.
+name: smoke test
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+        python: ["3.10", "3.13"]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Install
+        run: uv sync
+
+      - name: Every file compiles
+        run: uv run python -c "import glob, py_compile; [py_compile.compile(f, doraise=True) for f in glob.glob('*.py')]"
+
+      - name: India time zone loads (Windows has no built-in time zone database)
+        run: uv run python -c "from zoneinfo import ZoneInfo; print(ZoneInfo('Asia/Kolkata'))"
+
+      - name: No key gives a friendly message, even on an old Windows code page
+        env:
+          ANTHROPIC_API_KEY: ""
+          PYTHONIOENCODING: cp1252
+        run: |
+          cp .env.example .env
+          set +e
+          uv run python step1_first_run.py > out.txt 2>&1
+          code=$?
+          set -e
+          cat out.txt
+          test "$code" -eq 1
+          grep -q "No API key found" out.txt
+          ! grep -q "Traceback" out.txt

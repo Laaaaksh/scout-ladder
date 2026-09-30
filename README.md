@@ -8,8 +8,26 @@ The agent is the AI Launch Scout. Every morning the scout searches the web for n
 
 ## What you need
 
-1. Python 3.10 or newer. [uv](https://docs.astral.sh/uv/) is the easiest way to run this repo.
-2. An Anthropic API key with credits. Create one at https://platform.claude.com/settings/keys.
+Works on Windows and macOS. A GitHub test runs the repo on both after every change.
+
+1. An Anthropic API key with credits. Create one at https://platform.claude.com/settings/keys.
+2. [uv](https://docs.astral.sh/uv/), which installs Python for you. One line:
+
+macOS (Terminal):
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+Windows (PowerShell):
+
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+Close and reopen the terminal after the install.
+
+3. Git. No git? On GitHub click Code, then Download ZIP, and unzip.
 
 ## Setup (2 minutes)
 
@@ -17,10 +35,14 @@ The agent is the AI Launch Scout. Every morning the scout searches the web for n
 git clone https://github.com/Laaaaksh/scout-ladder.git
 cd scout-ladder
 cp .env.example .env        # then paste your key after ANTHROPIC_API_KEY=
-uv sync                     # or: pip install -r requirements.txt
+uv sync
 ```
 
-No uv? Replace `uv run` with `python` in every command below.
+On Windows, run these in PowerShell. The same four commands work there. In the old Command Prompt, use `copy .env.example .env` instead of `cp`.
+
+Open `.env` in any editor (Notepad works) and paste your key after `ANTHROPIC_API_KEY=` with no quotes and no spaces.
+
+No uv? Install Python 3.10 or newer, run `pip install -r requirements.txt`, and replace `uv run` with `python` in every command below.
 
 ## The ladder
 
