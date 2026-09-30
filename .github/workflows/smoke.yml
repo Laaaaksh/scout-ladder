@@ -20,7 +20,7 @@ jobs:
         shell: bash
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10
+      - uses: astral-sh/setup-uv@v10.2.0  # this action only publishes full version tags
         with:
           python-version: ${{ matrix.python }}
 
