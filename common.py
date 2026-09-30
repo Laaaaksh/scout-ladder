@@ -38,12 +38,18 @@ _preflight()
 
 MODEL = os.getenv("SCOUT_MODEL", "claude-opus-5")
 SPECIALIST_MODEL = os.getenv("SPECIALIST_MODEL", "claude-sonnet-5")
+# How hard the model thinks before each step. "medium" keeps research runs cheap; "high" is the model default.
+EFFORT = os.getenv("SCOUT_EFFORT", "medium")
 TOPIC = os.getenv("SCOUT_TOPIC", "agentic AI (AI agents, agent frameworks, agent products)")
 WORKSPACE = os.getenv("ANTHROPIC_WORKSPACE", "default")
 
-# Hard spend cap per session, in US cents as a string ("100" = $1.00).
+# Hard spend cap per session, in US cents as a string ("300" = $3.00).
 # Every session in this repo gets it, so a runaway loop can never eat your credits.
-BUDGET = {"type": "limit", "max_list_cost": {"amount": os.getenv("SCOUT_BUDGET_CENTS", "100"), "currency": "USD"}}
+# $3 leaves room for a graded run (research + grading + a revision); a single plain run costs about $1.
+BUDGET = {"type": "limit", "max_list_cost": {"amount": os.getenv("SCOUT_BUDGET_CENTS", "300"), "currency": "USD"}}
+# Scheduled runs get more headroom: nobody is watching, and each day's run has to dig past
+# everything already in memory, so it costs more than an interactive run. A missed morning is worse.
+DEPLOY_BUDGET = {"type": "limit", "max_list_cost": {"amount": os.getenv("SCOUT_DEPLOY_BUDGET_CENTS", "500"), "currency": "USD"}}
 
 STATE_FILE = Path(__file__).with_name(".scout-state.json")
 OUTPUT_DIR = Path(__file__).with_name("outputs")
@@ -136,9 +142,10 @@ def _print_event(event) -> dict | None:
     """Print one event. Returns a confirmation event to send back, if the agent is waiting on one."""
     kind = event.type
     if kind == "agent.message":
-        for block in event.content:
-            if block.type == "text" and block.text.strip():
-                print(f"\n{BOLD}🤖 {RESET}{block.text.strip()}\n")
+        # Cited text arrives split into many small blocks; join them back into one message.
+        text = "".join(block.text for block in event.content if block.type == "text").strip()
+        if text:
+            print(f"\n{BOLD}🤖 {RESET}{text}\n")
     elif kind in ("agent.tool_use", "agent.mcp_tool_use"):
         if getattr(event, "evaluated_permission", None) == "ask":
             return _ask_permission(event)
@@ -171,7 +178,8 @@ def _is_done(event) -> bool:
     if event.type == "session.status_idle":
         reason = getattr(event.stop_reason, "type", None)
         if reason == "budget_reached":
-            print(f"{RED}{BOLD}  💸 Hit the session budget ({BUDGET['max_list_cost']['amount']}¢). Stopping.{RESET}")
+            print(f"{RED}{BOLD}  💸 Hit the session budget (${int(BUDGET['max_list_cost']['amount']) / 100:.2f}). Stopping.{RESET}")
+            print(f"{YELLOW}     To allow more, raise SCOUT_BUDGET_CENTS in .env (e.g. 500 = $5) and rerun.{RESET}")
         return reason != "requires_action"
     return False
 

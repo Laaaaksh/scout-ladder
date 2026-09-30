@@ -43,7 +43,9 @@ Output files land in `outputs/<session-id>/`. Every run prints a Console link wh
 
 ## Spending safety
 
-- Every session has a hard cap of $1.00 (`SCOUT_BUDGET_CENTS=100` in `.env`). At the cap the session pauses. Nothing runs past the cap.
+- Every session has a hard cap of $3.00 (`SCOUT_BUDGET_CENTS=300` in `.env`). At the cap the session pauses. Nothing runs past the cap.
+- A plain run costs about $1. A graded run (research, grading, one revision) costs $2 to $3.
+- The daily schedule caps each run at $5 (`SCOUT_DEPLOY_BUDGET_CENTS=500`). Each day digs past everything already in memory, so later runs cost more.
 - Step 5 creates a daily schedule. Stop the schedule when you finish:
 
 ```bash
@@ -58,6 +60,7 @@ Set these in `.env`:
 
 - `SCOUT_TOPIC`: what the scout tracks. Try `Indian AI startups` or `open-source LLMs`.
 - `SCOUT_MODEL`: defaults to `claude-opus-5`.
+- `SCOUT_EFFORT`: how hard the model thinks before each step. Defaults to `medium`. Use `high` for deeper research at a higher cost.
 - `SPECIALIST_MODEL`: the model for the three finale specialists. Defaults to `claude-sonnet-5`, which costs less.
 
 ## Next steps

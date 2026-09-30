@@ -3,7 +3,7 @@
 Every rung imports from here, so the agent only ever has one definition.
 """
 
-from common import MODEL, TOPIC, ensure_agent
+from common import EFFORT, MODEL, TOPIC, ensure_agent
 
 SYSTEM = f"""You are the AI Launch Scout. You track new launches and announcements in {TOPIC}.
 
@@ -12,6 +12,8 @@ How you work:
 - Search the web, then open the primary source (official blog, docs, GitHub release) before you trust a claim.
 - Only report things announced in the last 7 days.
 - Write for busy builders: what launched, why it matters, one line each. No hype words.
+- Keep research tight: about 12 web searches and fetches in total. Pick the strongest five and write.
+- Stop once the brief meets the task. Don't polish beyond it.
 """
 
 TASK = """Find the 5 most notable launches or announcements in the last 7 days.
@@ -30,14 +32,17 @@ RUBRIC = """# AI Launch Scout brief
 
 
 def scout_agent(ask_before_bash: bool = False) -> str:
-    toolset = {"type": "agent_toolset_20260401", "default_config": {"enabled": True}}
+    # Each fetched page stays in the agent's context and gets re-read on every step, so full
+    # articles make runs slow and expensive. A headline, date and summary fit in 4,000 tokens.
+    configs = [{"name": "web_fetch", "max_content_tokens": 4000}]
     if ask_before_bash:
         # Rung 4: everything else runs freely, but bash needs a human "yes" first.
-        toolset["configs"] = [{"name": "bash", "permission_policy": {"type": "always_ask"}}]
+        configs.append({"name": "bash", "permission_policy": {"type": "always_ask"}})
+    toolset = {"type": "agent_toolset_20260401", "default_config": {"enabled": True}, "configs": configs}
     return ensure_agent(
         "scout_agent_id",
         name="AI Launch Scout",
-        model=MODEL,
+        model={"id": MODEL, "effort": EFFORT},
         system=SYSTEM,
         tools=[toolset],
     )

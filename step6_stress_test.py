@@ -14,7 +14,9 @@ from common import BUDGET, MODEL, SPECIALIST_MODEL, client, download_outputs, en
 READ_AND_SEARCH = {
     "type": "agent_toolset_20260401",
     "default_config": {"enabled": False},
-    "configs": [{"name": n, "enabled": True} for n in ("read", "write", "glob", "grep", "web_search", "web_fetch")],
+    "configs": [{"name": n, "enabled": True} for n in ("read", "write", "glob", "grep", "web_search")]
+    # Same reason as the scout: full pages stay in context and get re-read every step.
+    + [{"name": "web_fetch", "enabled": True, "max_content_tokens": 4000}],
 }
 
 market = ensure_agent(

@@ -7,9 +7,10 @@ A memory store is a folder that outlives the session. It shows up inside the san
 from common import BUDGET, client, download_outputs, ensure_environment, load_state, run, save_state, show_cost
 from scout import RUBRIC, TASK, scout_agent
 
-MEMORY_INSTRUCTIONS = """This is your record of what you have already reported.
-Before researching, read seen.md here (it may not exist yet). Do not report anything listed in it.
-After writing the brief, append each item you reported to seen.md as: date | title | URL."""
+MEMORY_INSTRUCTIONS = """seen.md here lists launches you already reported.
+At the start, read seen.md (it may not exist yet) and never report anything listed there.
+After the brief is final, append one line per reported item: date | title | URL.
+Touch no other files here. Keep memory work to those two steps."""
 
 
 def ensure_memory_store() -> str:
